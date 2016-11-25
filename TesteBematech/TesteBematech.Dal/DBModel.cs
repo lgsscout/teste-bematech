@@ -23,10 +23,10 @@ namespace TesteBematech.Dal
             modelBuilder.Conventions.Remove<PluralizingTableNameConvention>();
         }
 
-        public virtual DbSet<Pedido> Pedidos { get; set; }
-        public virtual DbSet<ItemPedido> ItensPedido { get; set; }
-        public virtual DbSet<Cliente> Clientes { get; set; }
-        public virtual DbSet<Produto> Produtos { get; set; }
+        public virtual DbSet<Pedido> Pedido { get; set; }
+        public virtual DbSet<ItemPedido> ItemPedido { get; set; }
+        public virtual DbSet<Cliente> Cliente { get; set; }
+        public virtual DbSet<Produto> Produto { get; set; }
     }
 
     public class Pedido

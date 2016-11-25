@@ -6,7 +6,7 @@ using System.Web.Mvc;
 
 namespace TesteBematech.Controllers
 {
-    public class HomeController : Controller
+    public class ProdutoController : Controller
     {
         public ActionResult Index()
         {
