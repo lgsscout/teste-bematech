@@ -1,4 +1,5 @@
-﻿@{
+﻿@model TesteBematech.Models.PedidoModel
+@{
     ViewBag.Title = "Pedidos";
 }
 
@@ -207,40 +208,16 @@
                         <select class="form-control" id="selCliente" />
                         <input type="hidden" class="form-control" id="hdCliente" />
                     </div>
-                    <div class="form-group">
-                        <label for="txtNumero">
-                            Numero
-                        </label>
-                        <input type="text" class="form-control" id="txtNumero" />
-                        <input type="hidden" class="form-control" id="hdNumero" />
-                    </div>
                 </div>
                 <div class="col-md-6">
                     <div class="form-group">
                         <label for="dpDataPedido">
-                            Data do Pedido - Início
+                            Data do Pedido
                         </label>
-                        <input type="date" class="form-control" id="dpPedidoIni" data-provide="datepicker" />
-                        <input type="hidden" class="form-control" id="hdPedidoIni" />
-                    </div>
-                    <div class="form-group">
-                        <label for="dpDataPedido">
-                            Data do Pedido - Fim
-                        </label>
-                        <input type="date" class="form-control" id="dpPedidoFim" data-provide="datepicker" />
-                        <input type="hidden" class="form-control" id="hdPedidoFim" />
+                        <input type="date" class="form-control" id="dpPedido" data-provide="datepicker" />
                     </div>
                 </div>
             </div>
-            <a id="btnBuscar" class="btn btn-default">
-                Buscar
-            </a>
-            <a id="btnLimparFiltros" class="btn btn-default">
-                Limpar Filtros
-            </a>
-            <a type="submit" class="btn btn-success" href="/Pedido/Pedido" data-toggle="modal">
-                Novo
-            </a>
         </fieldset>
     </div>
 </div>

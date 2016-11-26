@@ -12,5 +12,15 @@ namespace TesteBematech.Controllers
         {
             return View();
         }
+
+        public ActionResult Pedido()
+        {
+            return View();
+        }
+
+        public ActionResult Pedido(int id)
+        {
+            return View();
+        }
     }
 }

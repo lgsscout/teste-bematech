@@ -1,3 +1,281 @@
 ﻿@{
     ViewBag.Title = "Produtos";
 }
+
+@section scripts{
+    <script type="text/javascript">
+
+        $(function () {
+
+            $('#pagination-demo').twbsPagination({ totalPages: 1 });
+
+            CarregarProdutos('', 1);
+        });
+
+        function CarregarProdutos(busca, pagina) {
+
+            var url;
+
+            if (busca.length > 0) {
+                url = '/api/Produto/Buscar?busca=' + busca + '&pagina=' + pagina;
+            } else {
+                url = '/api/Produto/Buscar?pagina=' + pagina
+            }
+
+            $.ajax({
+                type: 'GET',
+                url: url,
+                datatype: 'html',
+                success: function (data) {
+
+                    $("#listProdutos tbody").empty();
+                    var rows = '';
+
+                    data.forEach(function (d) {
+                        rows +=
+                        '<tr>' +
+                        '<td>' + d.Id + '</td>' +
+                        '<td>' + d.Nome + '</td>' +
+                        '<td>' + d.Valor + '</td>' +
+                        '<td>' +
+                        '<a type="submit" class="btn btn-success" onclick="EditarProduto(' + d.Id + ')">Editar</a>' +
+                        '<a type="submit" class="btn btn-danger" onclick="ExcluirProduto(' + d.Id + ')">Excluir</a>' +
+                        '</td></tr>';
+                    });
+
+                    $("#listProdutos tbody").html(rows);
+
+                    AtualizarPaginador(busca, pagina);
+                }
+            });
+        }
+
+        function AtualizarPaginador(busca, pagina) {
+
+            var url;
+
+            if (busca.length > 0) {
+                url = '/api/Produto/QuantidadePaginas?busca=' + busca;
+            } else {
+                url = '/api/Produto/QuantidadePaginas';
+            }
+
+            $.ajax({
+                type: 'GET',
+                url: url,
+                //datatype: 'html',
+                success: function (data) {
+                    $('#pagination-demo').twbsPagination('destroy');
+                    $('#pagination-demo').twbsPagination({
+                        initiateStartPageClick: false,
+                        startPage: pagina,
+                        totalPages: data,
+                        visiblePages: 5,
+                        first: 'Primeira',
+                        prev: 'Anterior',
+                        next: 'Próxima',
+                        last: 'Última',
+                        onPageClick: function (event, page) {
+
+                            var hdBusca = $('#hdBusca').val();
+
+                            CarregarProdutos(hdBusca, page);
+                        }
+                    });
+                }
+            });
+        }
+
+        function LimparCamposBusca() {
+            $('#txtBusca').val('');
+            $('#hdBusca').val('');
+        }
+
+        function LimparCamposCadastro() {
+            $('#hdId').val('');
+            $('#txtNome').val('');
+            $('#txtValor').val('');
+        }
+
+        $('#btnBuscar').click(
+            function () {
+                var txtBusca = $('#txtBusca').val();
+                $('#hdBusca').val(txtBusca);
+                CarregarProdutos(txtBusca, 1);
+            }
+        );
+
+        $('#btnLimparFiltros').click(
+            function () {
+                $('#txtBusca').val('');
+                $('#hdBusca').val('');
+                CarregarProdutos('', 1);
+            }
+        );
+
+        function EditarProduto(id) {
+            var method = '/api/Produto/Buscar/' + id;
+
+            $.ajax({
+                type: 'GET',
+                url: method,
+                datatype: 'html',
+                success: function (data) {
+
+                    $('#modalCadastroProdutos').modal('show');
+                    $('#hdId').val(data.Id);
+                    $('#txtNome').val(data.Nome);
+                    $('#txtValor').val(data.Valor);
+                }
+            });
+        }
+
+        function ExcluirProduto(id) {
+
+            ShowConfirmModal('Exclusão', 'Deseja excluir este Produto?',
+                function () {
+                    var method = '/api/Produto/Excluir/' + id;
+
+                    $.ajax({
+                        type: 'POST',
+                        url: method,
+                        datatype: 'html',
+                        success: function (data) {
+
+                            $('#modalPopup').modal('hide');
+                            CarregarProdutos('', 1);
+                            ShowMessageModal('Sucesso', 'Registro excluído com sucesso');
+                        }
+                    });
+                },
+                function () {
+                    $('#modalPopup').modal('hide');
+                });
+        }
+
+        $('#btnSalvar').click(
+            function () {
+                var hdId = $('#hdId').val();
+                var txtNome = $('#txtNome').val();
+                var txtValor = $('#txtValor').val();
+
+                var type = '';
+
+                if (hdId.length == 0) {
+                    hdId = 0;
+                }
+
+                var method = '/api/Produto/Salvar';
+                var Produto = { Id: hdId, Nome: txtNome, Valor: txtValor };
+
+                $.ajax({
+                    type: 'POST',
+                    url: method,
+                    data: Produto,
+                    datatype: 'html',
+                    success: function (data) {
+                        $('#modalCadastroProdutos').modal('hide');
+                        LimparCamposCadastro();
+                        CarregarProdutos('', 1);
+                        ShowMessageModal('Sucesso', 'Dados gravados com sucesso');
+                    }
+                });
+            }
+        );
+
+    </script>
+}
+
+<div class="row">
+    <div class="col-lg-12 col-md-12 col-xs-12">
+        <fieldset>
+            <legend>Consulta</legend>
+            <div class="form-group">
+                <label for="txtBusca">
+                    Nome
+                </label>
+                <input type="text" class="form-control" id="txtBusca" />
+                <input type="hidden" class="form-control" id="hdBusca" />
+            </div>
+            <a id="btnBuscar" class="btn btn-default">
+                Buscar
+            </a>
+            <a id="btnLimparFiltros" class="btn btn-default">
+                Limpar Filtros
+            </a>
+            <a type="submit" class="btn btn-success" href="#modalCadastroProdutos" data-toggle="modal">
+                Novo
+            </a>
+        </fieldset>
+    </div>
+</div>
+<br />
+<hr />
+<br />
+<div class="row">
+    <div class="col-lg-12 col-md-12 col-xs-12">
+        <table id="listProdutos" class="table">
+            <thead>
+                <tr>
+                    <th colspan="4">
+                        Lista de Produtos
+                    </th>
+                </tr>
+                <tr>
+                    <th width="80">
+                        #
+                    </th>
+                    <th width="40%">
+                        Nome
+                    </th>
+                    <th width="30%">
+                        Valor
+                    </th>
+                    <th width="20%%">
+
+                    </th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+        <input id="hdNumPaginas" type="hidden" />
+        <ul id="pagination-demo" class="pagination-sm"></ul>
+    </div>
+</div>
+<div class="modal fade" id="modalCadastroProdutos" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">
+                    ×
+                </button>
+                <h4 class="modal-title" id="myModalLabel">
+                    Cadastro de Produto
+                </h4>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="txtNome">
+                        Nome
+                    </label>
+                    <input type="text" class="form-control" id="txtNome" />
+                    <input type="hidden" class="form-control" id="hdId" />
+                </div>
+                <div class="form-group">
+                    <label for="txtValor">
+                        Valor
+                    </label>
+                    <input type="number" class="form-control" id="txtValor" />
+                </div>
+            </div>
+            <div class="modal-footer">
+                <a class="btn btn-default" data-dismiss="modal">
+                    Cancelar
+                </a>
+                <a id="btnSalvar" class="btn btn-primary">
+                    Salvar
+                </a>
+            </div>
+        </div>
+    </div>
+</div>

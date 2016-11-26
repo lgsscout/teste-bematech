@@ -6,6 +6,27 @@
     <title>@ViewBag.Title - Teste Bematech</title>
     @Styles.Render("~/Content/css")
     @Scripts.Render("~/bundles/modernizr")
+    <script type="text/javascript">
+
+        function ShowMessageModal(titulo, mensagem) {
+            $('#modalMessageButtons').show();
+            $('#modalConfirmButtons').hide();
+            $('#modalPopup').modal('show');
+            $('#modalTitulo').html(titulo);
+            $('#modalMensagem').html(mensagem);
+        }
+
+        function ShowConfirmModal(titulo, mensagem, confirmCallback, cancelCallback) {
+            $('#modalMessageButtons').hide();
+            $('#modalConfirmButtons').show();
+            $('#modalPopup').modal('show');
+            $('#modalTitulo').html(titulo);
+            $('#modalMensagem').html(mensagem);
+            $('#btnModalConfirm').click(confirmCallback);
+            $('#btnModalCancel').click(btnModalCancel);
+        }
+
+    </script>
 </head>
 <body>
     <div class="navbar navbar-inverse navbar-fixed-top">
@@ -43,6 +64,36 @@
         </footer>
     </div>
 
+    <div class="modal fade" id="modalPopup" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">
+                        ×
+                    </button>
+                    <h4 class="modal-title" id="modalTitulo">
+                        
+                    </h4>
+                </div>
+                <div class="modal-body" id="modalMensagem">
+
+                </div>
+                <div id="modalMessageButtons" class="modal-footer">
+                    <a class="btn btn-default" data-dismiss="modal">
+                        Ok
+                    </a>
+                </div>
+                <div id="modalConfirmButtons" class="modal-footer">
+                    <a id="btnModalConfirm" class="btn btn-success" data-dismiss="modal">
+                        Confirmar
+                    </a>
+                    <a id="btnModalCancel" class="btn btn-danger" data-dismiss="modal">
+                        Cancelar
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
     @Scripts.Render("~/bundles/jquery")
     @Scripts.Render("~/bundles/bootstrap")
     @RenderSection("scripts", required: false)

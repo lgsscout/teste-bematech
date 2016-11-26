@@ -4,7 +4,6 @@ using System.Data;
 using System.Data.Entity;
 using System.Data.Entity.Infrastructure;
 using System.Linq;
-using System.Linq.Dynamic;
 using System.Net;
 using System.Net.Http;
 using System.Web.Http;
@@ -13,72 +12,72 @@ using TesteBematech.Dal;
 
 namespace TesteBematech.ApiControllers
 {
-    public class ClienteController : ApiController
+    public class ProdutoController : ApiController
     {
         private DBModel db = new DBModel();
         private const int quantidadePorPaginaDefault = 2;
 
-        // GET: api/Cliente/Listar
-        // GET: api/Cliente/Listar?pagina=<pagina>&quantidadePorPagina=<quantidadePorPagina>
+        // GET: api/Produto/Listar
+        // GET: api/Produto/Listar?pagina=<pagina>&quantidadePorPagina=<quantidadePorPagina>
         [AcceptVerbs("GET")]
-        public IQueryable<Cliente> Listar(int? pagina = null, int? quantidadePorPagina = quantidadePorPaginaDefault)
+        public IQueryable<Produto> Listar(int? pagina = null, int? quantidadePorPagina = quantidadePorPaginaDefault)
         {
             if(pagina.HasValue && quantidadePorPagina.HasValue)
             {
-                return db.Cliente.OrderBy(c => c.Nome).Skip(quantidadePorPagina.Value * (pagina.Value - 1)).Take(quantidadePorPagina.Value);
+                return db.Produto.OrderBy(c => c.Nome).Skip(quantidadePorPagina.Value * (pagina.Value - 1)).Take(quantidadePorPagina.Value);
             }
-            else return db.Cliente;
+            else return db.Produto;
         }
 
-        // GET: api/Cliente/Buscar?busca=<busca>
-        // GET: api/Cliente/Buscar?busca=<busca>&pagina=<pagina>&quantidadePorPagina=<quantidadePorPagina>
+        // GET: api/Produto/Buscar?busca=<busca>
+        // GET: api/Produto/Buscar?busca=<busca>&pagina=<pagina>&quantidadePorPagina=<quantidadePorPagina>
         [AcceptVerbs("GET")]
-        public IQueryable<Cliente> Buscar(string busca = "", int? pagina = null, int? quantidadePorPagina = quantidadePorPaginaDefault)
+        public IQueryable<Produto> Buscar(string busca = "", int? pagina = null, int? quantidadePorPagina = quantidadePorPaginaDefault)
         {
             if (pagina.HasValue && quantidadePorPagina.HasValue)
             {
-                return db.Cliente.OrderBy(c => c.Nome).Where(c => c.Nome.Contains(busca) || c.Cpf.Contains(busca)).Skip(quantidadePorPagina.Value * (pagina.Value - 1)).Take(quantidadePorPagina.Value);
+                return db.Produto.OrderBy(c => c.Nome).Where(c => c.Nome.Contains(busca)).Skip(quantidadePorPagina.Value * (pagina.Value - 1)).Take(quantidadePorPagina.Value);
             }
-            else return db.Cliente.Where(c => c.Nome.Contains(busca) || c.Cpf.Contains(busca));
+            else return db.Produto.Where(c => c.Nome.Contains(busca));
         }
 
-        // GET: api/Cliente/QuantidadePaginas?busca=<busca>
-        // GET: api/Cliente/QuantidadePaginas?busca=<busca>&quantidadePorPagina=<quantidadePorPagina>
+        // GET: api/Produto/QuantidadePaginas?busca=<busca>
+        // GET: api/Produto/QuantidadePaginas?busca=<busca>&quantidadePorPagina=<quantidadePorPagina>
         [AcceptVerbs("GET")]
         public int QuantidadePaginas(string busca = "", int quantidadePorPagina = quantidadePorPaginaDefault)
         {
-            var totalRegistros = db.Cliente.Where(c => c.Nome.Contains(busca) || c.Cpf.Contains(busca)).Count();
+            var totalRegistros = db.Produto.Where(c => c.Nome.Contains(busca)).Count();
             var totalPaginas = (totalRegistros - 1) / quantidadePorPagina + 1;
 
             return totalPaginas;
         }
 
-        // GET: api/Cliente/Buscar/<id>
+        // GET: api/Produto/Buscar/<id>
         [AcceptVerbs("GET")]
-        [ResponseType(typeof(Cliente))]
+        [ResponseType(typeof(Produto))]
         public IHttpActionResult Buscar(int id)
         {
-            Cliente cliente = db.Cliente.Find(id);
-            if (cliente == null)
+            Produto Produto = db.Produto.Find(id);
+            if (Produto == null)
             {
                 return NotFound();
             }
 
-            return Ok(cliente);
+            return Ok(Produto);
         }
 
-        // POST: api/Cliente/Salvar
+        // POST: api/Produto/Salvar
         [ResponseType(typeof(void))]
-        public IHttpActionResult Salvar(Cliente cliente)
+        public IHttpActionResult Salvar(Produto Produto)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            if (cliente.Id > 0)
+            if (Produto.Id > 0)
             {
-                db.Entry(cliente).State = EntityState.Modified;
+                db.Entry(Produto).State = EntityState.Modified;
 
                 try
                 {
@@ -86,7 +85,7 @@ namespace TesteBematech.ApiControllers
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!ClienteExists(cliente.Id))
+                    if (!ProdutoExists(Produto.Id))
                     {
                         return NotFound();
                     }
@@ -98,27 +97,27 @@ namespace TesteBematech.ApiControllers
             }
             else
             {
-                db.Cliente.Add(cliente);
+                db.Produto.Add(Produto);
                 db.SaveChanges();
             }
 
             return StatusCode(HttpStatusCode.NoContent);
         }
 
-        // POST: api/Cliente/Excluir
-        [ResponseType(typeof(Cliente))]
+        // POST: api/Produto/Excluir
+        [ResponseType(typeof(Produto))]
         public IHttpActionResult Excluir(int id)
         {
-            Cliente cliente = db.Cliente.Find(id);
-            if (cliente == null)
+            Produto Produto = db.Produto.Find(id);
+            if (Produto == null)
             {
                 return NotFound();
             }
 
-            db.Cliente.Remove(cliente);
+            db.Produto.Remove(Produto);
             db.SaveChanges();
 
-            return Ok(cliente);
+            return Ok(Produto);
         }
 
         protected override void Dispose(bool disposing)
@@ -130,9 +129,9 @@ namespace TesteBematech.ApiControllers
             base.Dispose(disposing);
         }
 
-        private bool ClienteExists(int id)
+        private bool ProdutoExists(int id)
         {
-            return db.Cliente.Count(e => e.Id == id) > 0;
+            return db.Produto.Count(e => e.Id == id) > 0;
         }
     }
 }

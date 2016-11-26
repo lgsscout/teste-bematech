@@ -5,48 +5,182 @@
 @section scripts{
     <script type="text/javascript">
 
-        //$("#txtCpf").
+        //var $pagination = $('#pagination-demo');
+        //var defaultOpts = { totalPages: 1 };
 
-        $("#btnBuscar").click(
+        $(function () {
+
+            $('#pagination-demo').twbsPagination({ totalPages: 1 });
+
+            CarregarClientes('', 1);
+        });
+
+        function CarregarClientes(busca, pagina) {
+
+            var url;
+
+            if (busca.length > 0) {
+                url = '/api/Cliente/Buscar?busca=' + busca + '&pagina=' + pagina;
+            } else {
+                url = '/api/Cliente/Buscar?pagina=' + pagina
+            }
+
+            $.ajax({
+                type: 'GET',
+                url: url,
+                datatype: 'html',
+                success: function (data) {
+
+                    $("#listClientes tbody").empty();
+                    var rows = '';
+
+                    data.forEach(function (d) {
+                        rows +=
+                        '<tr>' +
+                        '<td>' + d.Id + '</td>' +
+                        '<td>' + d.Nome + '</td>' +
+                        '<td>' + d.Cpf + '</td>' +
+                        '<td>' +
+                        '<a type="submit" class="btn btn-success" onclick="EditarCliente(' + d.Id + ')">Editar</a>' +
+                        '<a type="submit" class="btn btn-danger" onclick="ExcluirCliente(' + d.Id + ')">Excluir</a>' +
+                        '</td></tr>';
+                    });
+
+                    $("#listClientes tbody").html(rows);
+
+                    AtualizarPaginador(busca, pagina);
+                }
+            });
+        }
+
+        function AtualizarPaginador(busca, pagina) {
+
+            var url;
+
+            if (busca.length > 0) {
+                url = '/api/Cliente/QuantidadePaginas?busca=' + busca;
+            } else {
+                url = '/api/Cliente/QuantidadePaginas';
+            }
+
+            $.ajax({
+                type: 'GET',
+                url: url,
+                //datatype: 'html',
+                success: function (data) {
+                    $('#pagination-demo').twbsPagination('destroy');
+                    $('#pagination-demo').twbsPagination({
+                        initiateStartPageClick: false,
+                        startPage: pagina,
+                        totalPages: data,
+                        visiblePages: 5,
+                        first: 'Primeira',
+                        prev: 'Anterior',
+                        next: 'Próxima',
+                        last: 'Última',
+                        onPageClick: function (event, page) {
+
+                            var hdBusca = $('#hdBusca').val();
+
+                            CarregarClientes(hdBusca, page);
+                        }
+                    });
+                }
+            });
+        }
+
+        function LimparCamposBusca() {
+            $('#txtBusca').val('');
+            $('#hdBusca').val('');
+        }
+
+        function LimparCamposCadastro() {
+            $('#hdId').val('');
+            $('#txtNome').val('');
+            $('#txtCpf').val('');
+        }
+
+        $('#btnBuscar').click(
             function () {
-                var txtBusca = $("#txtBusca").val();
-
+                var txtBusca = $('#txtBusca').val();
+                $('#hdBusca').val(txtBusca);
+                CarregarClientes(txtBusca, 1);
             }
         );
 
-        function LimparCampos()
-        {
-            $("#hdId").val("");
-            $("#txtNome").val("");
-            $("#txtCpf").val("");
+        $('#btnLimparFiltros').click(
+            function () {
+                $('#txtBusca').val('');
+                $('#hdBusca').val('');
+                CarregarClientes('', 1);
+            }
+        );
+
+        function EditarCliente(id) {
+            var method = '/api/Cliente/Buscar/' + id;
+
+            $.ajax({
+                type: 'GET',
+                url: method,
+                datatype: 'html',
+                success: function (data) {
+
+                    $('#modalCadastroClientes').modal('show');
+                    $('#hdId').val(data.Id);
+                    $('#txtNome').val(data.Nome);
+                    $('#txtCpf').val(data.Cpf);
+                }
+            });
         }
 
-        $("#btnSalvar").click(
+        function ExcluirCliente(id) {
+
+            ShowConfirmModal('Exclusão', 'Deseja excluir este cliente?',
+                function () {
+                    var method = '/api/Cliente/Excluir/' + id;
+
+                    $.ajax({
+                        type: 'POST',
+                        url: method,
+                        datatype: 'html',
+                        success: function (data) {
+
+                            $('#modalPopup').modal('hide');
+                            CarregarClientes('', 1);
+                            ShowMessageModal('Sucesso', 'Registro excluído com sucesso');
+                        }
+                    });
+                },
+                function () {
+                    $('#modalPopup').modal('hide');
+                });
+        }
+
+        $('#btnSalvar').click(
             function () {
-                var hdId = $("#hdId").val();
-                var txtNome = $("#txtNome").val();
-                var txtCpf = $("#txtCpf").val();
+                var hdId = $('#hdId').val();
+                var txtNome = $('#txtNome').val();
+                var txtCpf = $('#txtCpf').val();
 
+                var type = '';
+
+                if (hdId.length == 0) {
+                    hdId = 0;
+                }
+
+                var method = '/api/Cliente/Salvar';
                 var cliente = { Id: hdId, Nome: txtNome, Cpf: txtCpf };
-                var method = "";
-                var type = "";
-
-                if (hdId.length > 0) {
-                    method = "/api/Cliente/" + hdId;
-                    type = "PUT"
-                }
-                else {
-                    method = "/api/Cliente";
-                    type = "POST"
-                }
 
                 $.ajax({
-                    type: type,
+                    type: 'POST',
                     url: method,
                     data: cliente,
-                    datatype: "html",
+                    datatype: 'html',
                     success: function (data) {
-                        //$('#result').html(data);
+                        $('#modalCadastroClientes').modal('hide');
+                        LimparCamposCadastro();
+                        CarregarClientes('', 1);
+                        ShowMessageModal('Sucesso', 'Dados gravados com sucesso');
                     }
                 });
             }
@@ -63,10 +197,14 @@
                 <label for="txtBusca">
                     Nome ou CPF
                 </label>
-                <input type="email" class="form-control" id="txtBusca" />
+                <input type="text" class="form-control" id="txtBusca" />
+                <input type="hidden" class="form-control" id="hdBusca" />
             </div>
             <a id="btnBuscar" class="btn btn-default">
                 Buscar
+            </a>
+            <a id="btnLimparFiltros" class="btn btn-default">
+                Limpar Filtros
             </a>
             <a type="submit" class="btn btn-success" href="#modalCadastroClientes" data-toggle="modal">
                 Novo
@@ -87,45 +225,24 @@
                     </th>
                 </tr>
                 <tr>
-                    <th>
+                    <th width="80">
                         #
                     </th>
-                    <th>
+                    <th width="40%">
                         Nome
                     </th>
-                    <th>
+                    <th width="30%">
                         CPF
                     </th>
-                    <th>
+                    <th width="20%%">
 
                     </th>
                 </tr>
             </thead>
             <tbody></tbody>
         </table>
-        <ul class="pagination">
-            <li>
-                <a href="#">Prev</a>
-            </li>
-            <li>
-                <a href="#">1</a>
-            </li>
-            <li>
-                <a href="#">2</a>
-            </li>
-            <li>
-                <a href="#">3</a>
-            </li>
-            <li>
-                <a href="#">4</a>
-            </li>
-            <li>
-                <a href="#">5</a>
-            </li>
-            <li>
-                <a href="#">Next</a>
-            </li>
-        </ul>
+        <input id="hdNumPaginas" type="hidden" />
+        <ul id="pagination-demo" class="pagination-sm"></ul>
     </div>
 </div>
 <div class="modal fade" id="modalCadastroClientes" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
@@ -151,7 +268,7 @@
                     <label for="txtCpf">
                         CPF
                     </label>
-                    <input type="number" class="form-control" id="txtCpf" />
+                    <input type="text" class="form-control" id="txtCpf" />
                 </div>
             </div>
             <div class="modal-footer">

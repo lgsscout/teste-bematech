@@ -57,6 +57,7 @@ namespace TesteBematech.Dal
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
 
+        [Range(0, 999.99, ErrorMessage = "Quantidade deve estar entre 0 e 999,99")]
         public decimal Quantidade { get; set; }
 
         public decimal Valor { get; set; }
@@ -80,8 +81,12 @@ namespace TesteBematech.Dal
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
 
+        [Required(ErrorMessage = "Nome obrigatório")]
+        [MaxLength(50, ErrorMessage = "Limite de 50 caracteres excedido")]
         public string Nome { get; set; }
 
+        [MinLength(11, ErrorMessage = "CPF deve conter 11 digitos")]
+        [MaxLength(11, ErrorMessage = "CPF deve conter 11 digitos")]
         public string Cpf { get; set; }
     }
 
@@ -91,6 +96,8 @@ namespace TesteBematech.Dal
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
 
+        [Required(ErrorMessage = "Nome obrigatório")]
+        [MaxLength(50, ErrorMessage = "Limite de 50 caracteres excedido")]
         public string Nome { get; set; }
 
         public decimal Valor { get; set; }
