@@ -183,6 +183,18 @@
             }
         );
 
+        $('#btnCancelar').click(
+            function () {
+                LimparCamposCadastro();
+            }
+        );
+
+        $('#btnNovo').click(
+            function () {
+                LimparCamposCadastro();
+            }
+        );
+
     </script>
 }
 
@@ -203,9 +215,6 @@
             <a id="btnLimparFiltros" class="btn btn-default">
                 Limpar Filtros
             </a>
-            <a type="submit" class="btn btn-success" href="#modalCadastroProdutos" data-toggle="modal">
-                Novo
-            </a>
         </fieldset>
     </div>
 </div>
@@ -219,6 +228,10 @@
                 <tr>
                     <th colspan="4">
                         Lista de Produtos
+
+                        <a id="btnNovo" type="submit" class="btn btn-success" href="#modalCadastroProdutos" data-toggle="modal">
+                            Novo
+                        </a>
                     </th>
                 </tr>
                 <tr>
@@ -269,7 +282,7 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <a class="btn btn-default" data-dismiss="modal">
+                <a id="btnCancelar" class="btn btn-default" data-dismiss="modal">
                     Cancelar
                 </a>
                 <a id="btnSalvar" class="btn btn-primary">

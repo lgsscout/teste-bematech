@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Web;
 using System.Web.Mvc;
+using TesteBematech.Dal;
 
 namespace TesteBematech.Controllers
 {
@@ -18,9 +19,10 @@ namespace TesteBematech.Controllers
             return View();
         }
 
-        public ActionResult Pedido(int id)
+        [HttpPost]
+        public ActionResult Pedido(Pedido pedido)
         {
-            return View();
+            return View(pedido);
         }
     }
 }

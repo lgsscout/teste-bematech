@@ -1,6 +1,7 @@
-﻿@model TesteBematech.Models.PedidoModel
+﻿@model TesteBematech.Dal.Pedido
 @{
-    ViewBag.Title = "Pedidos";
+    ViewBag.Title = "Cadastro de Pedido";
+    var idPedido = ViewContext.RouteData.Values["id"];
 }
 
 @section scripts{
@@ -47,16 +48,70 @@
             //    escapeMarkup: function (m) { return m; } // we do not want to escape markup since we are displaying html in results
             //});
 
-            CarregarPedidos('', '', '', '', 1);
+            CarregarClientes();
+            CarregarProdutos();
+
+            var id = '@idPedido';
+
+            if (id.length > 0)
+                CarregarPedido(id);
         });
 
         function CarregarClientes() {
 
-            $("#selCliente").html('');
-            
+            $.ajax({
+                type: 'GET',
+                url: '/api/Cliente/Listar',
+                datatype: 'html',
+                success: function (data) {
+
+                    $("#selCliente").empty();
+                    var itens = '';
+
+                    data.forEach(function (d) {
+                        itens +=
+                        '<option value="' + d.Id + '">' + d.Nome + '</option>';
+                    });
+
+                    $("#selCliente").html(itens);
+                    $("#selCliente").select2({
+                        placeholder: "Selecione o cliente",
+                        allowClear: true
+                    });
+                    $("#selCliente").val(null).trigger("change");
+                }
+            });
         }
 
-        function CarregarPedidos(idCliente, numeroPedido, dataIni, dataFim, pagina) {
+        function CarregarProdutos() {
+
+            $.ajax({
+                type: 'GET',
+                url: '/api/Produto/Listar',
+                datatype: 'html',
+                success: function (data) {
+
+                    $("#selProduto").empty();
+                    var itens = '';
+
+                    data.forEach(function (d) {
+                        itens +=
+                        '<option value="' + d.Id + '" valor="' + d.Valor + '">' + d.Nome + '</option>';
+                    });
+
+                    $("#selProduto").html(itens);
+                    $("#selProduto").select2({
+                        placeholder: "Selecione o produto",
+                        allowClear: true,
+                        width: '100%'
+                    });
+                    $("#selProduto").val(null).trigger("change");
+                }
+            });
+
+        }
+
+        function CarregarPedido(id) {
 
             var order = $('#hdPedidoOrder').val();
             var dir = $('#hdPedidoDir').val();
@@ -81,22 +136,25 @@
                 datatype: 'html',
                 success: function (data) {
 
-                    $("#listPedidos tbody").empty();
+                    $("#listItensPedido tbody").empty();
                     var rows = '';
 
                     data.forEach(function (d) {
                         rows +=
-                        '<tr>' +
-                        '<td>' + d.Id + '</td>' +
-                        '<td>' + d.Nome + '</td>' +
-                        '<td>' + d.Cpf + '</td>' +
-                        '<td>' +
-                        '<a type="submit" class="btn btn-success" href="/Pedido/Pedido/' + d.Id + '">Editar</a>' +
-                        '<a type="submit" class="btn btn-danger" onclick="ExcluirPedido(' + d.Id + ')">Excluir</a>' +
-                        '</td></tr>';
+                            '<tr tempId="' + tempId + '">' +
+                            '<td><span id="nomeProduto" tempId="' + tempId + '">' + nomeProduto + '</span></td>' +
+                            '<td><span id="quantidade" tempId="' + tempId + '">' + quantidade + '</span></td>' +
+                            '<td><span id="valor" tempId="' + tempId + '">' + valor + '</span></td>' +
+                            '<td><span id="valorTotal" tempId="' + tempId + '">' + valorTotal + '</span></td>' +
+                            '<td>' +
+                            '<input id="idItemPedido" tempId="' + tempId + '" value="' + idItemPedido + '" type="hidden"/>' +
+                            '<input id="idProduto" tempId="' + tempId + '" value="' + idProduto + '" type="hidden"/>' +
+                            '<a type="submit" class="btn btn-success" onclick="EditarItemPedido(' + tempId + ')">Editar</a>' +
+                            '<a type="submit" class="btn btn-danger" onclick="ExcluirItemPedido(' + tempId + ')">Excluir</a>' +
+                            '</td></tr>';
                     });
 
-                    $("#listPedidos tbody").html(rows);
+                    $("#listItensPedido tbody").html(rows);
 
                     AtualizarPaginador(idCliente, numeroPedido, dataIni, dataFim, pagina);
                 }
@@ -141,27 +199,24 @@
             });
         }
 
-        function LimparCamposBusca() {
-            $('#txtBusca').val('');
-            $('#hdBusca').val('');
+        $('#selProduto').change(
+            function (e) {
+                AtualizarTotaisItem();
+            });
+
+        $('#txtQuantidade').change(
+            function (e) {
+                AtualizarTotaisItem();
+            });
+
+        function AtualizarTotaisItem() {
+            var valor = $("#selProduto :selected").attr("valor");
+            var qtd = $("#txtQuantidade").val();
+            $("#txtValorTotal").val(qtd * valor);
+            $("#txtValor").val(valor);
         }
 
-        $('#btnBuscar').click(
-            function () {
-                var selCliente = $('#selCliente').val();
-                $('#hdCliente').val(selCliente);
-                var txtNumero = $('#txtNumero').val();
-                $('#hdNumero').val(txtNumero);
-                var dpPedidoIni = $('#dpPedidoIni').val();
-                $('#hdPedidoIni').val(dpPedidoIni);
-                var dpPedidoFim = $('#dpPedidoFim').val();
-                $('#hdPedidoFim').val(dpPedidoFim);
-
-                CarregarPedidos(selCliente, txtNumero, dpPedidoIni, dpPedidoFim, 1, order, dir);
-            }
-        );
-
-        $('#btnLimparFiltros').click(
+        $('#btnLimpar').click(
             function () {
                 $('#txtBusca').val('');
                 $('#hdBusca').val('');
@@ -169,7 +224,93 @@
             }
         );
 
-        function ExcluirPedido(id) {
+        $('#btnSalvarItem').click(
+            function () {
+
+                var tempId = $('#hdTempId').val();
+                var idItemPedido = $('#hdIdItemPedido').val();
+                var idProduto = $('#selProduto').val();
+                var nomeProduto = $("#selProduto :selected").html();
+                var quantidade = $('#txtQuantidade').val();
+                var valor = $('#txtValor').val();
+                var valorTotal = $('#txtValorTotal').val();
+
+                if (ValidarItem(idProduto, quantidade)) SalvarItem(tempId, idItemPedido, idProduto, nomeProduto, quantidade, valor, valorTotal);
+            }
+        );
+
+        function ValidarItem(idProduto, quantidade) {
+            var result = true;
+            var message = '';
+
+            if (!idProduto) {
+                result = false;
+                message += "Produto não selecionado<br/>";
+            }
+            if (quantidade.length == 0 || quantidade == 0) {
+                result = false;
+                message += "Quantidade não informada<br/>";
+            }
+            if (!result) ShowMessageModal('Alerta', message);
+
+            return result;
+        }
+
+        function SalvarItem(tempId, idItemPedido, idProduto, nomeProduto, quantidade, valor, valorTotal) {
+
+            if (tempId.length > 0) {
+                $('#idItemPedido[tempId="' + tempId + '"]').val(idItemPedido);
+                $('#idProduto[tempId="' + tempId + '"]').val(idProduto);
+                $('#nomeProduto[tempId="' + tempId + '"]').html(nomeProduto);
+                $('#quantidade[tempId="' + tempId + '"]').html(quantidade);
+                $('#valor[tempId="' + tempId + '"]').html(valor);
+                $('#valorTotal[tempId="' + tempId + '"]').html(valorTotal);
+            }
+            else {
+                tempId = new Date().getTime();
+                var rows =
+                    '<tr tempId="' + tempId + '">' +
+                    '<td><span id="nomeProduto" tempId="' + tempId + '">' + nomeProduto + '</span></td>' +
+                    '<td><span id="quantidade" tempId="' + tempId + '">' + quantidade + '</span></td>' +
+                    '<td><span id="valor" tempId="' + tempId + '">' + valor + '</span></td>' +
+                    '<td><span id="valorTotal" tempId="' + tempId + '">' + valorTotal + '</span></td>' +
+                    '<td>' +
+                    '<input id="idItemPedido" tempId="' + tempId + '" value="' + idItemPedido + '" type="hidden"/>' +
+                    '<input id="idProduto" tempId="' + tempId + '" value="' + idProduto + '" type="hidden"/>' +
+                    '<a type="submit" class="btn btn-success" onclick="EditarItemPedido(' + tempId + ')">Editar</a>' +
+                    '<a type="submit" class="btn btn-danger" onclick="ExcluirItemPedido(' + tempId + ')">Excluir</a>' +
+                    '</td></tr>';
+
+                $("#listItensPedido tbody").append(rows);
+            }
+
+            LimparCadastroItem();
+            $('#modalCadastroItemPedido').modal('hide');
+        }
+
+        function LimparCadastroItem() {
+
+            $('#hdTempId').val('');
+            $('#hdIdItemPedido').val('');
+            $("#selProduto").val(null).trigger("change");
+            $('#txtQuantidade').val('');
+            $('#txtValor').val('');
+            $('#txtValorTotal').val('');
+        }
+
+        function EditarItemPedido(tempId) {
+
+            $('#hdTempId').val(tempId);
+            $('#hdIdProduto').val($('#idItemPedido[tempId="' + tempId + '"]').html());
+            $("#selProduto").val($('#idProduto[tempId="' + tempId + '"]').val()).trigger("change");
+            $('#txtQuantidade').val($('#quantidade[tempId="' + tempId + '"]').html());
+            $('#txtValor').val($('#valor[tempId="' + tempId + '"]').html());
+            $('#txtValorTotal').val($('#valorTotal[tempId="' + tempId + '"]').html());
+
+            $('#modalCadastroItemPedido').modal('show');
+        }
+
+        function ExcluirItemPedido(tempId) {
 
             ShowConfirmModal('Exclusão', 'Deseja excluir este Pedido?',
                 function () {
@@ -192,19 +333,47 @@
                 });
         }
 
+        $('#btnCancelarItem').click(
+            function () {
+                LimparCadastroItem();
+            }
+        );
+
+        $('#btnNovoItem').click(
+            function () {
+                LimparCadastroItem();
+            }
+        );
+
     </script>
 }
 
 <div class="row">
     <div class="col-lg-12 col-md-12 col-xs-12">
+        <a id="btnSalvar" class="btn btn-primary">
+            Salvar
+        </a>
+        <a id="btnLimpar" class="btn btn-default">
+            Limpar
+        </a>
+        <a href="/Pedido/Index" class="btn btn-default">
+            Cancelar
+        </a>
+    </div>
+</div>
+<br />
+<div class="row">
+    <div class="col-lg-12 col-md-12 col-xs-12">
         <fieldset>
-            <legend>Consulta</legend>
+            <legend>
+                Dados do Pedido
+            </legend>
             <div class="row">
                 <div class="col-md-6">
                     <div class="form-group">
                         <label for="selCliente">
                             Cliente
-                        </label>
+                        </label><br />
                         <select class="form-control" id="selCliente" />
                         <input type="hidden" class="form-control" id="hdCliente" />
                     </div>
@@ -228,31 +397,98 @@
     <div class="col-lg-12 col-md-12 col-xs-12">
         <input type="hidden" id="hdPedidoOrder" value="Id" />
         <input type="hidden" id="hdPedidoDir" value="asc" />
-        <table id="listPedidos" class="table">
+        <table id="listItensPedido" class="table">
             <thead>
                 <tr>
                     <th colspan="4">
-                        Lista de Pedidos
+                        Itens do Pedido
+
+                        <a id="btnNovoItem" type="submit" class="btn btn-success" href="#modalCadastroItemPedido" data-toggle="modal">
+                            Novo
+                        </a>
                     </th>
                 </tr>
                 <tr>
-                    <th width="80">
-                        #
-                    </th>
                     <th width="40%">
-                        Nome
+                        Produto
                     </th>
-                    <th width="30%">
-                        CPF
+                    <th width="10%">
+                        Quantidade
                     </th>
-                    <th width="20%%">
+                    <th width="15%">
+                        Valor
+                    </th>
+                    <th width="15%">
+                        Valor Total
+                    </th>
+                    <th width="20%">
 
                     </th>
                 </tr>
             </thead>
             <tbody></tbody>
         </table>
-        <input id="hdNumPaginas" type="hidden" />
-        <ul id="pagination-demo" class="pagination-sm"></ul>
+    </div>
+</div>
+<div class="modal fade" id="modalCadastroItemPedido" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">
+                    ×
+                </button>
+                <h4 class="modal-title" id="myModalLabel">
+                    Cadastro de Item do Pedido
+                </h4>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="selProduto">
+                                Produto
+                            </label><br />
+                            <select class="form-control js-example-basic-single" id="selProduto" />
+                            <input type="hidden" class="form-control" id="hdIdItemPedido" />
+                            <input type="hidden" class="form-control" id="hdTempId" />
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="txtValor">
+                                Valor
+                            </label>
+                            <input type="number" class="form-control disabled" disabled id="txtValor" />
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="txtQuantidade">
+                                Quantidade
+                            </label>
+                            <input type="number" class="form-control" id="txtQuantidade" />
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="txtValorTotal">
+                                Valor Total
+                            </label>
+                            <input type="number" class="form-control disabled" disabled id="txtValorTotal" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <a id="btnCancelarItem" class="btn btn-default" data-dismiss="modal">
+                    Cancelar
+                </a>
+                <a id="btnSalvarItem" class="btn btn-primary">
+                    Salvar
+                </a>
+            </div>
+        </div>
     </div>
 </div>
