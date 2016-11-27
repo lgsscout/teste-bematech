@@ -79,8 +79,8 @@
                         '<td>' + d.DataEntregaFormat + '</td>' +
                         '<td>' + d.ValorTotal + '</td>' +
                         '<td>' +
-                        '<a type="submit" class="btn btn-success" href="/Pedido/Pedido/' + d.Id + '">Editar</a>' +
-                        '<a type="submit" class="btn btn-danger" onclick="ExcluirPedido(' + d.Id + ')">Excluir</a>' +
+                        //'<a type="submit" class="btn btn-success" href="/Pedido/Pedido/' + d.Id + '">Editar</a>' +
+                        //'<a type="submit" class="btn btn-danger" onclick="ExcluirPedido(' + d.Id + ')">Excluir</a>' +
                         '</td></tr>';
                     });
 
@@ -291,16 +291,16 @@
                     <th id="thNumeroPedido" width="20%" onclick="OrdenarTabela('NumeroPedido', 1);">
                         Número
                     </th>
-                    <th id="thCliente" width="30%" onclick="OrdenarTabela('Cliente', 1);">
+                    <th id="thCliente" width="40%" onclick="OrdenarTabela('Cliente', 1);">
                         Cliente
                     </th>
-                    <th id="thDataEntrega" width="15%" onclick="OrdenarTabela('DataEntrega', 1);">
+                    <th id="thDataEntrega" width="20%" onclick="OrdenarTabela('DataEntrega', 1);">
                         Data de Entrega
                     </th>
-                    <th id="thValorTotal" width="15%" onclick="OrdenarTabela('ValorTotal', 1);">
+                    <th id="thValorTotal" width="20%" onclick="OrdenarTabela('ValorTotal', 1);">
                         Valor Total
                     </th>
-                    <th width="20%%">
+                    <th width="0%%">
 
                     </th>
                 </tr>
