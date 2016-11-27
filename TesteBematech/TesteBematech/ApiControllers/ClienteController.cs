@@ -4,7 +4,6 @@ using System.Data;
 using System.Data.Entity;
 using System.Data.Entity.Infrastructure;
 using System.Linq;
-using System.Linq.Dynamic;
 using System.Net;
 using System.Net.Http;
 using System.Web.Http;
@@ -16,7 +15,7 @@ namespace TesteBematech.ApiControllers
     public class ClienteController : ApiController
     {
         private DBModel db = new DBModel();
-        private const int quantidadePorPaginaDefault = 2;
+        private const int quantidadePorPaginaDefault = 10;
 
         // GET: api/Cliente/Listar
         // GET: api/Cliente/Listar?pagina=<pagina>&quantidadePorPagina=<quantidadePorPagina>

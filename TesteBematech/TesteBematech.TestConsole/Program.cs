@@ -13,8 +13,8 @@ namespace TesteBematech.TestConsole
         {
             var db = new DBModel(ConnectionStrings.connString);
 
-            db.Produto.Add(new Produto { Id = 1, Nome = "Produto 1", Valor = 10 });
-            db.SaveChanges();
+            var pedido = db.Pedido.FirstOrDefault();
+            pedido.Cliente.ToString();
         }
     }
 }

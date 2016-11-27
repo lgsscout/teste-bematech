@@ -7,46 +7,9 @@
 @section scripts{
     <script type="text/javascript">
 
-        //var $pagination = $('#pagination-demo');
-        //var defaultOpts = { totalPages: 1 };
-
         $(function () {
 
             $('#pagination-demo').twbsPagination({ totalPages: 1 });
-
-            //$("#selCliente").select2({
-            //    placeholder: "Selecione o Cliente",
-            //    ajax: { // instead of writing the function to execute the request we use Select2's convenient helper
-            //        url: "/api/Cliente/Buscar",
-            //        dataType: 'json',
-            //        quietMillis: 250,
-            //        data: function (term, page) {
-            //            return {
-            //                q: term, // search term
-            //            };
-            //        },
-            //        results: function (data, page) { // parse the results into the format expected by Select2.
-            //            // since we are using custom formatting functions we do not need to alter the remote JSON data
-            //            return { results: data.items };
-            //        },
-            //        cache: true
-            //    },
-            //    initSelection: function (element, callback) {
-            //        // the input tag has a value attribute preloaded that points to a preselected repository's id
-            //        // this function resolves that id attribute to an object that select2 can render
-            //        // using its formatResult renderer - that way the repository name is shown preselected
-            //        var id = $(element).val();
-            //        if (id !== "") {
-            //            $.ajax("https://api.github.com/repositories/" + id, {
-            //                dataType: "json"
-            //            }).done(function (data) { callback(data); });
-            //        }
-            //    },
-            //    formatResult: repoFormatResult, // omitted for brevity, see the source of this page
-            //    formatSelection: repoFormatSelection,  // omitted for brevity, see the source of this page
-            //    dropdownCssClass: "bigdrop", // apply css that makes the dropdown taller
-            //    escapeMarkup: function (m) { return m; } // we do not want to escape markup since we are displaying html in results
-            //});
 
             CarregarClientes();
             CarregarProdutos();
@@ -113,22 +76,7 @@
 
         function CarregarPedido(id) {
 
-            var order = $('#hdPedidoOrder').val();
-            var dir = $('#hdPedidoDir').val();
-
-            var url = '/api/Pedido/Buscar?pagina=' + pagina;
-            if (idCliente.length > 0)
-                url += '&idCliente=' + idCliente;
-            if (numeroPedido.length > 0)
-                url += '&numeroPedido=' + numeroPedido;
-            if (dataIni)
-                url += '&dataIni=' + dataIni;
-            if (dataFim)
-                url += '&dataFim=' + dataFim;
-            if (order.length > 0)
-                url += '&order=' + order;
-            if (dir.length > 0)
-                url += '&dir=' + dir;
+            var url = '/api/Pedido/Buscar/' + id;
 
             $.ajax({
                 type: 'GET',
@@ -136,19 +84,26 @@
                 datatype: 'html',
                 success: function (data) {
 
+                    $('#hdIdPedido').val(data.Id);
+                    $('#selCliente').val(data.IdCliente).trigger("change");
+                    $('#dpPedido').val(data.DataEntregaFormat);
+                    $('#txtNumeroPedido').val(data.NumeroPedido);
+                    $('#txtTotalPedido').val(data.ValorTotal);
+
                     $("#listItensPedido tbody").empty();
                     var rows = '';
 
-                    data.forEach(function (d) {
+                    data.ItemPedidoEdicao.forEach(function (d) {
+                        tempId = new Date().getTime();
                         rows +=
                             '<tr tempId="' + tempId + '">' +
-                            '<td><span id="nomeProduto" tempId="' + tempId + '">' + nomeProduto + '</span></td>' +
-                            '<td><span id="quantidade" tempId="' + tempId + '">' + quantidade + '</span></td>' +
-                            '<td><span id="valor" tempId="' + tempId + '">' + valor + '</span></td>' +
-                            '<td><span id="valorTotal" tempId="' + tempId + '">' + valorTotal + '</span></td>' +
+                            '<td><span id="nomeProduto" tempId="' + tempId + '">' + d.NomeProduto + '</span></td>' +
+                            '<td><span id="quantidade" tempId="' + tempId + '">' + d.Quantidade + '</span></td>' +
+                            '<td><span id="valor" tempId="' + tempId + '">' + d.Valor + '</span></td>' +
+                            '<td><span id="valorTotal" tempId="' + tempId + '">' + d.ValorTotal + '</span></td>' +
                             '<td>' +
-                            '<input id="idItemPedido" tempId="' + tempId + '" value="' + idItemPedido + '" type="hidden"/>' +
-                            '<input id="idProduto" tempId="' + tempId + '" value="' + idProduto + '" type="hidden"/>' +
+                            '<input id="idItemPedido" tempId="' + tempId + '" value="' + d.IdItemPedido + '" type="hidden"/>' +
+                            '<input id="idProduto" tempId="' + tempId + '" value="' + d.IdProduto + '" type="hidden"/>' +
                             '<a type="submit" class="btn btn-success" onclick="EditarItemPedido(' + tempId + ')">Editar</a>' +
                             '<a type="submit" class="btn btn-danger" onclick="ExcluirItemPedido(' + tempId + ')">Excluir</a>' +
                             '</td></tr>';
@@ -224,6 +179,78 @@
             }
         );
 
+        $('#btnSalvar').click(
+            function () {
+
+                var idPedido = $('#hdIdPedido').val();
+                var idCliente = $('#selCliente').val();
+                var dataPedido = $('#dpPedido').val();
+                var numeroPedido = $('#txtNumeroPedido').val();
+                var valorTotal = $('#txtTotalPedido').val();
+
+                var itens = [];
+                $("table#listItensPedido tbody tr").each(function () {
+                    var idItemPedido = $(this).find('#idItemPedido').html();
+                    var idProduto = $(this).find('#idProduto').val();
+                    var quantidade = $(this).find('#quantidade').html();
+                    var valor = $(this).find('#valor').html();
+                    var valorTotal = $(this).find('#valorTotal').html();
+                    itens.push({ Id: idItemPedido, IdProduto: idProduto, Quantidade: quantidade, Valor: valor, ValorTotal: valorTotal });
+                });
+
+                if (Validar(dataPedido, itens)) Salvar(idPedido, idCliente, dataPedido, numeroPedido, valorTotal, itens);
+            }
+        );
+
+        function Validar(dataPedido, itens) {
+            var result = true;
+            var message = '';
+
+            var d = new Date();
+            d.setHours(0, 0, 0, 0);
+            var data = new Date(dataPedido);
+            data.setHours(data.getHours() + data.getTimezoneOffset() / 60);
+
+            if (dataPedido.length == 0) {
+                result = false;
+                message += "Data do Pedido não informada<br/>";
+            }
+            if (data < d.getTime()) {
+                result = false;
+                message += "Data do Pedido inferior a data atual<br/>";
+            }
+            if (itens.length == 0) {
+                result = false;
+                message += "Nenhum produto adicionado<br/>";
+            }
+            if (!result) ShowMessageModal('Alerta', message);
+
+            return result;
+        }
+
+        function Salvar(idPedido, idCliente, dataPedido, numeroPedido, valorTotal, itens) {
+
+            if (idPedido.length == 0) {
+                idPedido = 0;
+            }
+            
+            var method = '/api/Pedido/Salvar';
+            var pedido = { Id: idPedido, IdCliente: idCliente, DataEntrega: dataPedido, NumeroPedido: numeroPedido, ValorTotal: valorTotal, ItensPedido: itens };
+
+            $.ajax({
+                type: 'POST',
+                url: method,
+                data: pedido,
+                datatype: 'html',
+                success: function (data) {
+                    $('#modalCadastroClientes').modal('hide');
+                    //LimparCamposCadastro();
+                    //CarregarClientes('', 1);
+                    ShowMessageRedirectModal('Sucesso', 'Dados gravados com sucesso', '/Pedido/Index/');
+                }
+            });
+        }
+
         $('#btnSalvarItem').click(
             function () {
 
@@ -235,11 +262,11 @@
                 var valor = $('#txtValor').val();
                 var valorTotal = $('#txtValorTotal').val();
 
-                if (ValidarItem(idProduto, quantidade)) SalvarItem(tempId, idItemPedido, idProduto, nomeProduto, quantidade, valor, valorTotal);
+                if (ValidarItem(idProduto, quantidade, tempId)) SalvarItem(tempId, idItemPedido, idProduto, nomeProduto, quantidade, valor, valorTotal);
             }
         );
 
-        function ValidarItem(idProduto, quantidade) {
+        function ValidarItem(idProduto, quantidade, tempId) {
             var result = true;
             var message = '';
 
@@ -250,6 +277,14 @@
             if (quantidade.length == 0 || quantidade == 0) {
                 result = false;
                 message += "Quantidade não informada<br/>";
+            }
+            var contemProduto = Array.from($('#idProduto'))
+                .some(function (el) {
+                    return el.value == idProduto;
+                });
+            if (contemProduto) {
+                result = false;
+                message += "Produto já inserido<br/>";
             }
             if (!result) ShowMessageModal('Alerta', message);
 
@@ -284,6 +319,7 @@
                 $("#listItensPedido tbody").append(rows);
             }
 
+            AtualizarTotalPedido();
             LimparCadastroItem();
             $('#modalCadastroItemPedido').modal('hide');
         }
@@ -296,6 +332,16 @@
             $('#txtQuantidade').val('');
             $('#txtValor').val('');
             $('#txtValorTotal').val('');
+        }
+
+        function AtualizarTotalPedido() {
+
+            var total = 0;
+            $("table#listItensPedido tbody tr").each(function () {
+                var valorTotal = $(this).find('#valorTotal').html();
+                total += parseFloat(valorTotal);
+            });
+            $('#txtTotalPedido').val(total);
         }
 
         function EditarItemPedido(tempId) {
@@ -312,21 +358,25 @@
 
         function ExcluirItemPedido(tempId) {
 
-            ShowConfirmModal('Exclusão', 'Deseja excluir este Pedido?',
+            ShowConfirmModal('Exclusão', 'Deseja excluir este item?',
                 function () {
-                    var method = '/api/Pedido/Excluir/' + id;
 
-                    $.ajax({
-                        type: 'POST',
-                        url: method,
-                        datatype: 'html',
-                        success: function (data) {
+                    $('tr[tempId="' + tempId + '"]').remove();
 
-                            $('#modalPopup').modal('hide');
-                            CarregarPedidos('', 1);
-                            ShowMessageModal('Sucesso', 'Registro excluído com sucesso');
-                        }
-                    });
+                    if ($('#idItemPedido[tempId="' + tempId + '"]').html().length > 0) {
+                        var method = '/api/ItemPedido/Excluir/' + id;
+
+                        $.ajax({
+                            type: 'POST',
+                            url: method,
+                            datatype: 'html',
+                            success: function (data) {
+                                AtualizarTotalPedido();
+                                $('#modalPopup').modal('hide');
+                                ShowMessageModal('Sucesso', 'Registro excluído com sucesso');
+                            }
+                        });
+                    }
                 },
                 function () {
                     $('#modalPopup').modal('hide');
@@ -375,7 +425,13 @@
                             Cliente
                         </label><br />
                         <select class="form-control" id="selCliente" />
-                        <input type="hidden" class="form-control" id="hdCliente" />
+                        <input type="hidden" class="form-control" id="hdIdPedido" />
+                    </div>
+                    <div class="form-group">
+                        <label for="txtNumeroPedido">
+                            Número do Pedido
+                        </label><br />
+                        <input type="text" class="form-control disabled" disabled id="txtNumeroPedido" />
                     </div>
                 </div>
                 <div class="col-md-6">
@@ -384,6 +440,12 @@
                             Data do Pedido
                         </label>
                         <input type="date" class="form-control" id="dpPedido" data-provide="datepicker" />
+                    </div>
+                    <div class="form-group">
+                        <label for="txtTotalPedido">
+                            Valor Total
+                        </label><br />
+                        <input type="text" class="form-control disabled" disabled id="txtTotalPedido" />
                     </div>
                 </div>
             </div>

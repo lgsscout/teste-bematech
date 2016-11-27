@@ -4,11 +4,11 @@ using System.Data;
 using System.Data.Entity;
 using System.Data.Entity.Infrastructure;
 using System.Linq;
-using System.Linq.Dynamic;
 using System.Net;
 using System.Net.Http;
 using System.Web.Http;
 using System.Web.Http.Description;
+using System.Xml.Serialization;
 using TesteBematech.Dal;
 using TesteBematech.Models;
 
@@ -17,12 +17,12 @@ namespace TesteBematech.ApiControllers
     public class PedidoController : ApiController
     {
         private DBModel db = new DBModel();
-        private const int quantidadePorPaginaDefault = 2;
+        private const int quantidadePorPaginaDefault = 10;
 
         // GET: api/Pedido/Listar
         // GET: api/Pedido/Listar?pagina=<pagina>&quantidadePorPagina=<quantidadePorPagina>
         [AcceptVerbs("GET")]
-        public IQueryable<Pedido> Listar(int? pagina = null, int? quantidadePorPagina = quantidadePorPaginaDefault, string order = "", string dir = "")
+        public IQueryable<PedidoModel> Listar(int? pagina = null, int? quantidadePorPagina = quantidadePorPaginaDefault, string order = "", string dir = "")
         {
             var list = Filtrar(order: order, dir: dir);
 
@@ -36,16 +36,16 @@ namespace TesteBematech.ApiControllers
         // GET: api/Pedido/Buscar?busca=<busca>
         // GET: api/Pedido/Buscar?busca=<busca>&pagina=<pagina>&quantidadePorPagina=<quantidadePorPagina>
         [AcceptVerbs("GET")]
-        public IQueryable<Pedido> Buscar(int? idCliente = null, string numeroPedido = "", DateTime? dataIni = null, DateTime? dataFim = null, int? pagina = null, int? quantidadePorPagina = quantidadePorPaginaDefault, string order = "", string dir = "")
+        public IQueryable<PedidoModel> Buscar(int? idCliente = null, string numeroPedido = "", DateTime? dataIni = null, DateTime? dataFim = null, int? pagina = null, int? quantidadePorPagina = quantidadePorPaginaDefault, string order = "", string dir = "")
         {
-            var list = Filtrar(idCliente, numeroPedido, dataIni, dataFim, order, dir);
+            var list = Filtrar(idCliente, numeroPedido, dataIni, dataFim, order, dir).ToList();
 
             if (pagina.HasValue && quantidadePorPagina.HasValue && !string.IsNullOrEmpty(order) && !string.IsNullOrEmpty(dir))
             {
-                return list.Skip(quantidadePorPagina.Value * (pagina.Value - 1)).Take(quantidadePorPagina.Value);
+                return list.AsQueryable().Skip(quantidadePorPagina.Value * (pagina.Value - 1)).Take(quantidadePorPagina.Value);
             }
 
-            else return list;
+            else return list.AsQueryable();
         }
 
         // GET: api/Pedido/QuantidadePaginas?busca=<busca>
@@ -61,26 +61,47 @@ namespace TesteBematech.ApiControllers
 
         // GET: api/Pedido/Buscar/<id>
         [AcceptVerbs("GET")]
-        [ResponseType(typeof(Pedido))]
+        [ResponseType(typeof(PedidoEdicaoModel))]
         public IHttpActionResult Buscar(int id)
         {
             Pedido Pedido = db.Pedido.Find(id);
+
+            var pedidoResult = new PedidoEdicaoModel
+            {
+                Id = Pedido.Id,
+                NumeroPedido = Pedido.NumeroPedido,
+                IdCliente = Pedido.Cliente.Id,
+                DataEntrega = Pedido.DataEntrega,
+                ValorTotal = Pedido.ValorTotal,
+                ItemPedidoEdicao = Pedido.ItensPedido
+                    .Select(i =>
+                        new ItemPedidoEdicaoModel
+                        {
+                            Id = i.Id,
+                            IdProduto = i.IdProduto,
+                            NomeProduto = i.Produto.Nome,
+                            Quantidade = i.Quantidade,
+                            Valor = i.Valor,
+                            ValorTotal = i.ValorTotal,
+                        }).ToList()
+            };
+
             if (Pedido == null)
             {
                 return NotFound();
             }
 
-            return Ok(Pedido);
+            return Ok(pedidoResult);
         }
 
         // POST: api/Pedido/Salvar
         [ResponseType(typeof(void))]
         public IHttpActionResult Salvar(Pedido Pedido)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
+            //if (!ModelState.IsValid)
+            //{
+            //    return BadRequest(ModelState);
+            //}
 
             if (Pedido.Id > 0)
             {
@@ -104,8 +125,17 @@ namespace TesteBematech.ApiControllers
             }
             else
             {
-                db.Pedido.Add(Pedido);
-                db.SaveChanges();
+                try
+                {
+                    Pedido.NumeroPedido = string.Join(".", DateTime.Now.ToString("yyyyMMddHHmmss"), Pedido.IdCliente);
+
+                    db.Pedido.Add(Pedido);
+                    db.SaveChanges();
+                }
+                catch (Exception e)
+                {
+                    throw e;
+                }
             }
 
             return StatusCode(HttpStatusCode.NoContent);
@@ -141,21 +171,44 @@ namespace TesteBematech.ApiControllers
             return db.Pedido.Count(e => e.Id == id) > 0;
         }
 
-        private IQueryable<Pedido> Filtrar(int? idCliente = null, string numeroPedido = "", DateTime? dataIni = null, DateTime? dataFim = null, string order = "", string dir = "")
+        private IQueryable<PedidoModel> Filtrar(int? idCliente = null, string numeroPedido = "", DateTime? dataIni = null, DateTime? dataFim = null, string order = "", string dir = "")
         {
-            if(dataFim.HasValue)
+            if (dataFim.HasValue)
                 dataFim = dataFim.Value.AddDays(1);
 
             var list = db.Pedido
                 .Where(p =>
-                    idCliente.HasValue ? idCliente == p.IdCliente : true &&
-                    numeroPedido.Length > 0 ? p.NumeroPedido.Contains(numeroPedido) : true &&
-                    dataIni.HasValue ? p.DataEntrega >= dataIni : true &&
-                    dataFim.HasValue ? p.DataEntrega <= dataFim : true);
+                    (idCliente.HasValue ? idCliente == p.IdCliente : true) &&
+                    (numeroPedido.Length > 0 ? p.NumeroPedido.Contains(numeroPedido) : true) &&
+                    (dataIni.HasValue ? p.DataEntrega >= dataIni : true) &&
+                    (dataFim.HasValue ? p.DataEntrega < dataFim : true))
+                .Select(p =>
+                    new PedidoModel
+                    {
+                        Id = p.Id,
+                        NumeroPedido = p.NumeroPedido,
+                        NomeCliente = p.Cliente.Nome,
+                        DataEntrega = p.DataEntrega,
+                        ValorTotal = p.ValorTotal
+                    });
             if (string.IsNullOrEmpty(order) || string.IsNullOrEmpty(dir))
                 return list;
             else
-                return list.OrderBy(order, dir);
+            {
+                switch (order)
+                {
+                    case "NumeroPedido":
+                        return dir == "desc" ? list.OrderByDescending(p => p.NumeroPedido) : list.OrderBy(p => p.NumeroPedido);
+                    case "Cliente":
+                        return dir == "desc" ? list.OrderByDescending(p => p.NomeCliente) : list.OrderBy(p => p.NomeCliente);
+                    case "DataEntrega":
+                        return dir == "desc" ? list.OrderByDescending(p => p.DataEntrega) : list.OrderBy(p => p.DataEntrega);
+                    case "ValorTotal":
+                        return dir == "desc" ? list.OrderByDescending(p => p.ValorTotal) : list.OrderBy(p => p.ValorTotal);
+                    default:
+                        return list;
+                }
+            }
         }
     }
 }

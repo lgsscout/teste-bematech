@@ -15,7 +15,7 @@ namespace TesteBematech.ApiControllers
     public class ProdutoController : ApiController
     {
         private DBModel db = new DBModel();
-        private const int quantidadePorPaginaDefault = 2;
+        private const int quantidadePorPaginaDefault = 10;
 
         // GET: api/Produto/Listar
         // GET: api/Produto/Listar?pagina=<pagina>&quantidadePorPagina=<quantidadePorPagina>

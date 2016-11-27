@@ -7,6 +7,7 @@ namespace TesteBematech.Dal
     using System.Data.Entity;
     using System.Data.Entity.ModelConfiguration.Conventions;
     using System.Linq;
+    using System.Runtime.Serialization;
 
     public class DBModel : DbContext
     {
@@ -30,7 +31,7 @@ namespace TesteBematech.Dal
         public virtual DbSet<Cliente> Cliente { get; set; }
         public virtual DbSet<Produto> Produto { get; set; }
     }
-
+    
     public class Pedido
     {
         [Key]
@@ -50,7 +51,7 @@ namespace TesteBematech.Dal
 
         public virtual ICollection<ItemPedido> ItensPedido { get; set; }
     }
-
+    
     public class ItemPedido
     {
         [Key]
@@ -74,7 +75,7 @@ namespace TesteBematech.Dal
 
         public virtual Produto Produto { get; set; }
     }
-
+    
     public class Cliente
     {
         [Key]
@@ -89,7 +90,7 @@ namespace TesteBematech.Dal
         [MaxLength(11, ErrorMessage = "CPF deve conter 11 digitos")]
         public string Cpf { get; set; }
     }
-
+    
     public class Produto
     {
         [Key]

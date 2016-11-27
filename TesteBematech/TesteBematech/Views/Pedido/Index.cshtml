@@ -12,47 +12,34 @@
 
             $('#pagination-demo').twbsPagination({ totalPages: 1 });
 
-            //$("#selCliente").select2({
-            //    placeholder: "Selecione o Cliente",
-            //    ajax: { // instead of writing the function to execute the request we use Select2's convenient helper
-            //        url: "/api/Cliente/Buscar",
-            //        dataType: 'json',
-            //        quietMillis: 250,
-            //        data: function (term, page) {
-            //            return {
-            //                q: term, // search term
-            //            };
-            //        },
-            //        results: function (data, page) { // parse the results into the format expected by Select2.
-            //            // since we are using custom formatting functions we do not need to alter the remote JSON data
-            //            return { results: data.items };
-            //        },
-            //        cache: true
-            //    },
-            //    initSelection: function (element, callback) {
-            //        // the input tag has a value attribute preloaded that points to a preselected repository's id
-            //        // this function resolves that id attribute to an object that select2 can render
-            //        // using its formatResult renderer - that way the repository name is shown preselected
-            //        var id = $(element).val();
-            //        if (id !== "") {
-            //            $.ajax("https://api.github.com/repositories/" + id, {
-            //                dataType: "json"
-            //            }).done(function (data) { callback(data); });
-            //        }
-            //    },
-            //    formatResult: repoFormatResult, // omitted for brevity, see the source of this page
-            //    formatSelection: repoFormatSelection,  // omitted for brevity, see the source of this page
-            //    dropdownCssClass: "bigdrop", // apply css that makes the dropdown taller
-            //    escapeMarkup: function (m) { return m; } // we do not want to escape markup since we are displaying html in results
-            //});
-
-            CarregarPedidos('', '', '', '', 1);
+            CarregarClientes();
+            IniciarOrdenacao("NumeroPedido");
         });
 
         function CarregarClientes() {
 
-            $("#selCliente").html('');
-            
+            $.ajax({
+                type: 'GET',
+                url: '/api/Cliente/Listar',
+                datatype: 'html',
+                success: function (data) {
+
+                    $("#selCliente").empty();
+                    var itens = '';
+
+                    data.forEach(function (d) {
+                        itens +=
+                        '<option value="' + d.Id + '">' + d.Nome + '</option>';
+                    });
+
+                    $("#selCliente").html(itens);
+                    $("#selCliente").select2({
+                        placeholder: "Selecione o cliente",
+                        allowClear: true
+                    });
+                    $("#selCliente").val(null).trigger("change");
+                }
+            });
         }
 
         function CarregarPedidos(idCliente, numeroPedido, dataIni, dataFim, pagina) {
@@ -61,7 +48,7 @@
             var dir = $('#hdPedidoDir').val();
 
             var url = '/api/Pedido/Buscar?pagina=' + pagina;
-            if (idCliente.length > 0)
+            if (idCliente)
                 url += '&idCliente=' + idCliente;
             if (numeroPedido.length > 0)
                 url += '&numeroPedido=' + numeroPedido;
@@ -84,11 +71,13 @@
                     var rows = '';
 
                     data.forEach(function (d) {
+
                         rows +=
                         '<tr>' +
-                        '<td>' + d.Id + '</td>' +
-                        '<td>' + d.Nome + '</td>' +
-                        '<td>' + d.Cpf + '</td>' +
+                        '<td>' + d.NumeroPedido + '</td>' +
+                        '<td>' + d.NomeCliente + '</td>' +
+                        '<td>' + d.DataEntregaFormat + '</td>' +
+                        '<td>' + d.ValorTotal + '</td>' +
                         '<td>' +
                         '<a type="submit" class="btn btn-success" href="/Pedido/Pedido/' + d.Id + '">Editar</a>' +
                         '<a type="submit" class="btn btn-danger" onclick="ExcluirPedido(' + d.Id + ')">Excluir</a>' +
@@ -105,7 +94,7 @@
         function AtualizarPaginador(idCliente, numeroPedido, dataIni, dataFim, pagina) {
 
             var url = '/api/Pedido/QuantidadePaginas?pagina=' + pagina;
-            if (idCliente.length > 0)
+            if (idCliente)
                 url += '&idCliente=' + idCliente;
             if (numeroPedido.length > 0)
                 url += '&numeroPedido=' + numeroPedido;
@@ -130,41 +119,40 @@
                         next: 'Próxima',
                         last: 'Última',
                         onPageClick: function (event, page) {
-
-                            var hdBusca = $('#hdBusca').val();
-
-                            CarregarPedidos(hdBusca, page);
+                            BuscarPedidos(page);
                         }
                     });
                 }
             });
         }
 
-        function LimparCamposBusca() {
-            $('#txtBusca').val('');
-            $('#hdBusca').val('');
-        }
-
         $('#btnBuscar').click(
             function () {
-                var selCliente = $('#selCliente').val();
-                $('#hdCliente').val(selCliente);
-                var txtNumero = $('#txtNumero').val();
-                $('#hdNumero').val(txtNumero);
-                var dpPedidoIni = $('#dpPedidoIni').val();
-                $('#hdPedidoIni').val(dpPedidoIni);
-                var dpPedidoFim = $('#dpPedidoFim').val();
-                $('#hdPedidoFim').val(dpPedidoFim);
-
-                CarregarPedidos(selCliente, txtNumero, dpPedidoIni, dpPedidoFim, 1, order, dir);
+                BuscarPedidos(1);
             }
         );
 
+        function BuscarPedidos(pagina) {
+
+            var selCliente = $('#selCliente').val();
+            $('#hdCliente').val(selCliente);
+            var txtNumero = $('#txtNumero').val();
+            $('#hdNumero').val(txtNumero);
+            var dpPedidoIni = $('#dpPedidoIni').val();
+            $('#hdPedidoIni').val(dpPedidoIni);
+            var dpPedidoFim = $('#dpPedidoFim').val();
+            $('#hdPedidoFim').val(dpPedidoFim);
+
+            CarregarPedidos(selCliente, txtNumero, dpPedidoIni, dpPedidoFim, pagina);
+        }
+
         $('#btnLimparFiltros').click(
             function () {
-                $('#txtBusca').val('');
-                $('#hdBusca').val('');
-                CarregarPedidos('', 1);
+                $('#selCliente').val(null).trigger("change");
+                $('#txtNumero').val('');
+                $('#dpPedidoIni').val('');
+                $('#dpPedidoFim').val('');
+                IniciarOrdenacao("NumeroPedido");
             }
         );
 
@@ -191,6 +179,46 @@
                 });
         }
 
+        function OrdenarTabela(campo, pagina) {
+
+            var order = $('#hdPedidoOrder').val();
+            var dir = $('#hdPedidoDir').val();
+
+            $('th').removeClass('glyphicon-arrow-up');
+            $('th').removeClass('glyphicon-arrow-down');
+
+            if (order == campo)
+                dir = dir == "asc" ? "desc" : "asc";
+            else {
+                order = campo;
+                dir = "asc";
+            }
+
+            $('#th' + order).addClass(dir == "asc" ? 'glyphicon-arrow-down' : 'glyphicon-arrow-up');
+
+            $('#hdPedidoOrder').val(order);
+            $('#hdPedidoDir').val(dir);
+
+            BuscarPedidos(pagina);
+        }
+
+        function IniciarOrdenacao(campo) {
+
+            var order = $('#hdPedidoOrder').val();
+            var dir = $('#hdPedidoDir').val();
+
+            $('th').removeClass('glyphicon-arrow-up');
+            $('th').removeClass('glyphicon-arrow-down');
+
+            dir = "asc";
+            $('#th' + campo).addClass('glyphicon-arrow-down');
+
+            $('#hdPedidoOrder').val(campo);
+            $('#hdPedidoDir').val('asc');
+
+            BuscarPedidos(1);
+        }
+
     </script>
 }
 
@@ -203,7 +231,7 @@
                     <div class="form-group">
                         <label for="selCliente">
                             Cliente
-                        </label>
+                        </label><br />
                         <select class="form-control" id="selCliente" />
                         <input type="hidden" class="form-control" id="hdCliente" />
                     </div>
@@ -246,28 +274,31 @@
 <br />
 <div class="row">
     <div class="col-lg-12 col-md-12 col-xs-12">
-        <input type="hidden" id="hdPedidoOrder" value="Id" />
-        <input type="hidden" id="hdPedidoDir" value="asc" />
+        <input type="hidden" id="hdPedidoOrder" />
+        <input type="hidden" id="hdPedidoDir" />
         <table id="listPedidos" class="table">
             <thead>
                 <tr>
                     <th colspan="4">
                         Lista de Pedidos
 
-                        <a type="submit" class="btn btn-success" href="/Pedido/Pedido" data-toggle="modal">
+                        <a type="submit" class="btn btn-success" href="/Pedido/Pedido">
                             Novo
                         </a>
                     </th>
                 </tr>
                 <tr>
-                    <th width="80">
-                        #
+                    <th id="thNumeroPedido" width="20%" onclick="OrdenarTabela('NumeroPedido', 1);">
+                        Número
                     </th>
-                    <th width="40%">
-                        Nome
+                    <th id="thCliente" width="30%" onclick="OrdenarTabela('Cliente', 1);">
+                        Cliente
                     </th>
-                    <th width="30%">
-                        CPF
+                    <th id="thDataEntrega" width="15%" onclick="OrdenarTabela('DataEntrega', 1);">
+                        Data de Entrega
+                    </th>
+                    <th id="thValorTotal" width="15%" onclick="OrdenarTabela('ValorTotal', 1);">
+                        Valor Total
                     </th>
                     <th width="20%%">
 
