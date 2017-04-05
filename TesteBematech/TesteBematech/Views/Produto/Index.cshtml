@@ -4,11 +4,10 @@
 
 @section scripts{
     <script type="text/javascript">
-
         $(function () {
 
             $('#pagination-demo').twbsPagination({ totalPages: 1 });
-
+            
             CarregarProdutos('', 1);
         });
 
@@ -22,32 +21,46 @@
                 url = '/api/Produto/Buscar?pagina=' + pagina
             }
 
-            $.ajax({
-                type: 'GET',
-                url: url,
-                datatype: 'html',
-                success: function (data) {
-
-                    $("#listProdutos tbody").empty();
-                    var rows = '';
-
-                    data.forEach(function (d) {
-                        rows +=
-                        '<tr>' +
-                        '<td>' + d.Id + '</td>' +
-                        '<td>' + d.Nome + '</td>' +
-                        '<td>' + d.Valor + '</td>' +
-                        '<td>' +
-                        '<a type="submit" class="btn btn-success" onclick="EditarProduto(' + d.Id + ')">Editar</a>' +
-                        '<a type="submit" class="btn btn-danger" onclick="ExcluirProduto(' + d.Id + ')">Excluir</a>' +
-                        '</td></tr>';
+            app = angular.module('produtoApp', []);
+            app.controller('gridProdutoController', function ($scope, $http) {
+                    $http({
+                        method: "GET",
+                        url: url,
+                    }).then(function mySucces(data) {
+                        $scope.produtos = data;
+                        AtualizarPaginador(busca, pagina);
+                        }, function myError(data) {
+                            $scope.produtos = data;
                     });
+                });
+            //        type: 'GET',
+            //        url: url,
+            //        datatype: 'html',
+            //        success: function (data) {
 
-                    $("#listProdutos tbody").html(rows);
+            //            $scope.produtos = data;
 
-                    AtualizarPaginador(busca, pagina);
-                }
-            });
+            //            //$("#listProdutos tbody").empty();
+            //            //var rows = '';
+
+            //            //data.forEach(function (d) {
+            //            //    rows +=
+            //            //    '<tr>' +
+            //            //    '<td>' + d.Id + '</td>' +
+            //            //    '<td>' + d.Nome + '</td>' +
+            //            //    '<td>' + d.Valor + '</td>' +
+            //            //    '<td>' +
+            //            //    '<a type="submit" class="btn btn-success" onclick="EditarProduto(' + d.Id + ')">Editar</a>' +
+            //            //    '<a type="submit" class="btn btn-danger" onclick="ExcluirProduto(' + d.Id + ')">Excluir</a>' +
+            //            //    '</td></tr>';
+            //            //});
+
+            //            //$("#listProdutos tbody").html(rows);
+
+            //            AtualizarPaginador(busca, pagina);
+            //        }
+            //    });
+            //});
         }
 
         function AtualizarPaginador(busca, pagina) {
@@ -198,96 +211,108 @@
     </script>
 }
 
-<div class="row">
-    <div class="col-lg-12 col-md-12 col-xs-12">
-        <fieldset>
-            <legend>Consulta</legend>
-            <div class="form-group">
-                <label for="txtBusca">
-                    Nome
-                </label>
-                <input type="text" class="form-control" id="txtBusca" />
-                <input type="hidden" class="form-control" id="hdBusca" />
-            </div>
-            <a id="btnBuscar" class="btn btn-default">
-                Buscar
-            </a>
-            <a id="btnLimparFiltros" class="btn btn-default">
-                Limpar Filtros
-            </a>
-        </fieldset>
-    </div>
-</div>
-<br />
-<hr />
-<br />
-<div class="row">
-    <div class="col-lg-12 col-md-12 col-xs-12">
-        <table id="listProdutos" class="table">
-            <thead>
-                <tr>
-                    <th colspan="4">
-                        Lista de Produtos
-
-                        <a id="btnNovo" type="submit" class="btn btn-success" href="#modalCadastroProdutos" data-toggle="modal">
-                            Novo
-                        </a>
-                    </th>
-                </tr>
-                <tr>
-                    <th width="80">
-                        #
-                    </th>
-                    <th width="40%">
-                        Nome
-                    </th>
-                    <th width="30%">
-                        Valor
-                    </th>
-                    <th width="20%%">
-
-                    </th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
-        <input id="hdNumPaginas" type="hidden" />
-        <ul id="pagination-demo" class="pagination-sm"></ul>
-    </div>
-</div>
-<div class="modal fade" id="modalCadastroProdutos" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">
-                    ×
-                </button>
-                <h4 class="modal-title" id="myModalLabel">
-                    Cadastro de Produto
-                </h4>
-            </div>
-            <div class="modal-body">
+<div class="row" ng-app="produtoApp">
+    <div class="row">
+        <div class="col-lg-12 col-md-12 col-xs-12">
+            <fieldset>
+                <legend>Consulta</legend>
                 <div class="form-group">
-                    <label for="txtNome">
+                    <label for="txtBusca">
                         Nome
                     </label>
-                    <input type="text" class="form-control" id="txtNome" />
-                    <input type="hidden" class="form-control" id="hdId" />
+                    <input type="text" class="form-control" id="txtBusca" />
+                    <input type="hidden" class="form-control" id="hdBusca" />
                 </div>
-                <div class="form-group">
-                    <label for="txtValor">
-                        Valor
-                    </label>
-                    <input type="number" class="form-control" id="txtValor" />
+                <a id="btnBuscar" class="btn btn-default">
+                    Buscar
+                </a>
+                <a id="btnLimparFiltros" class="btn btn-default">
+                    Limpar Filtros
+                </a>
+            </fieldset>
+        </div>
+    </div>
+    <br />
+    <hr />
+    <br />
+    <div class="row">
+        <div class="col-lg-12 col-md-12 col-xs-12" ng-controller="gridProdutoController">
+            <table id="listProdutos" class="table">
+                <thead>
+                    <tr>
+                        <th colspan="4">
+                            Lista de Produtos
+
+                            <a id="btnNovo" type="submit" class="btn btn-success right" href="#modalCadastroProdutos" data-toggle="modal">
+                                Novo
+                            </a>
+                        </th>
+                    </tr>
+                    <tr>
+                        <th width="80">
+                            #
+                        </th>
+                        <th width="40%">
+                            Nome
+                        </th>
+                        <th width="30%">
+                            Valor
+                        </th>
+                        <th width="20%%">
+
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr ng-repeat="x in produtos">
+                        <td>{{x.Id}}</td>
+                        <td>{{x.Nome}}</td>
+                        <td>{{x.Valor}}</td>
+                        <td>
+                            <a type="submit" class="btn btn-success" onclick="EditarProduto('{{x.Id}}')">Editar</a>
+                            <a type="submit" class="btn btn-danger" onclick="ExcluirProduto('{{x.Id}}')">Excluir</a>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            <input id="hdNumPaginas" type="hidden" />
+            <ul id="pagination-demo" class="pagination-sm"></ul>
+        </div>
+    </div>
+    <div class="modal fade" id="modalCadastroProdutos" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">
+                        ×
+                    </button>
+                    <h4 class="modal-title" id="myModalLabel">
+                        Cadastro de Produto
+                    </h4>
                 </div>
-            </div>
-            <div class="modal-footer">
-                <a id="btnCancelar" class="btn btn-default" data-dismiss="modal">
-                    Cancelar
-                </a>
-                <a id="btnSalvar" class="btn btn-primary">
-                    Salvar
-                </a>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="txtNome">
+                            Nome
+                        </label>
+                        <input type="text" class="form-control" id="txtNome" />
+                        <input type="hidden" class="form-control" id="hdId" />
+                    </div>
+                    <div class="form-group">
+                        <label for="txtValor">
+                            Valor
+                        </label>
+                        <input type="number" class="form-control" id="txtValor" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <a id="btnCancelar" class="btn btn-default" data-dismiss="modal">
+                        Cancelar
+                    </a>
+                    <a id="btnSalvar" class="btn btn-primary">
+                        Salvar
+                    </a>
+                </div>
             </div>
         </div>
     </div>

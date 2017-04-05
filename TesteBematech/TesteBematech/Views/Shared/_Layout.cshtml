@@ -6,6 +6,7 @@
     <title>@ViewBag.Title - Teste Bematech</title>
     @Styles.Render("~/Content/css")
     @Scripts.Render("~/bundles/modernizr")
+    @Scripts.Render("~/bundles/angular")
     <script type="text/javascript">
 
         function ShowMessageModal(titulo, mensagem) {
@@ -38,9 +39,11 @@
             $('#btnModalCancel').click(btnModalCancel);
         }
 
+
+
     </script>
 </head>
-<body>
+<body ng-app="myApp">
     <div class="navbar navbar-inverse navbar-fixed-top">
         <div class="container">
             <div class="navbar-header">
@@ -73,6 +76,7 @@
         <hr />
         <footer>
             <p>&copy; @DateTime.Now.Year - Teste Bematech</p>
+            <span ng-controller="myTestController">{{test}}</span>
         </footer>
     </div>
 
@@ -83,9 +87,7 @@
                     <button type="button" class="close" data-dismiss="modal" aria-hidden="true">
                         ×
                     </button>
-                    <h4 class="modal-title" id="modalTitulo">
-                        
-                    </h4>
+                    <h4 class="modal-title" id="modalTitulo"></h4>
                 </div>
                 <div class="modal-body" id="modalMensagem">
 

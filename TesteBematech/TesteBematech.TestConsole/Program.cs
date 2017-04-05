@@ -11,10 +11,10 @@ namespace TesteBematech.TestConsole
     {
         static void Main(string[] args)
         {
-            var db = new DBModel(ConnectionStrings.connString);
+            //var db = new DBModel(ConnectionStrings.connString);
 
-            var pedido = db.Pedido.FirstOrDefault();
-            pedido.Cliente.ToString();
+            //var pedido = db.Pedido.FirstOrDefault();
+            //pedido.Cliente.ToString();
         }
     }
 }
