@@ -7,7 +7,7 @@
         $(function () {
 
             $('#pagination-demo').twbsPagination({ totalPages: 1 });
-            
+
             CarregarProdutos('', 1);
         });
 
@@ -21,46 +21,32 @@
                 url = '/api/Produto/Buscar?pagina=' + pagina
             }
 
-            app = angular.module('produtoApp', []);
-            app.controller('gridProdutoController', function ($scope, $http) {
-                    $http({
-                        method: "GET",
-                        url: url,
-                    }).then(function mySucces(data) {
-                        $scope.produtos = data;
-                        AtualizarPaginador(busca, pagina);
-                        }, function myError(data) {
-                            $scope.produtos = data;
+            $.ajax({
+                type: 'GET',
+                url: url,
+                datatype: 'html',
+                success: function (data) {
+
+                    $("#listProdutos tbody").empty();
+                    var rows = '';
+
+                    data.forEach(function (d) {
+                        rows +=
+                            '<tr>' +
+                            '<td>' + d.Id + '</td>' +
+                            '<td>' + d.Nome + '</td>' +
+                            '<td>' + d.Valor + '</td>' +
+                            '<td>' +
+                            '<a type="submit" class="btn btn-success" onclick="EditarProduto(' + d.Id + ')">Editar</a>' +
+                            '<a type="submit" class="btn btn-danger" onclick="ExcluirProduto(' + d.Id + ')">Excluir</a>' +
+                            '</td></tr>';
                     });
-                });
-            //        type: 'GET',
-            //        url: url,
-            //        datatype: 'html',
-            //        success: function (data) {
 
-            //            $scope.produtos = data;
+                    $("#listProdutos tbody").html(rows);
 
-            //            //$("#listProdutos tbody").empty();
-            //            //var rows = '';
-
-            //            //data.forEach(function (d) {
-            //            //    rows +=
-            //            //    '<tr>' +
-            //            //    '<td>' + d.Id + '</td>' +
-            //            //    '<td>' + d.Nome + '</td>' +
-            //            //    '<td>' + d.Valor + '</td>' +
-            //            //    '<td>' +
-            //            //    '<a type="submit" class="btn btn-success" onclick="EditarProduto(' + d.Id + ')">Editar</a>' +
-            //            //    '<a type="submit" class="btn btn-danger" onclick="ExcluirProduto(' + d.Id + ')">Excluir</a>' +
-            //            //    '</td></tr>';
-            //            //});
-
-            //            //$("#listProdutos tbody").html(rows);
-
-            //            AtualizarPaginador(busca, pagina);
-            //        }
-            //    });
-            //});
+                    AtualizarPaginador(busca, pagina);
+                }
+            });
         }
 
         function AtualizarPaginador(busca, pagina) {
@@ -263,17 +249,7 @@
                         </th>
                     </tr>
                 </thead>
-                <tbody>
-                    <tr ng-repeat="x in produtos">
-                        <td>{{x.Id}}</td>
-                        <td>{{x.Nome}}</td>
-                        <td>{{x.Valor}}</td>
-                        <td>
-                            <a type="submit" class="btn btn-success" onclick="EditarProduto('{{x.Id}}')">Editar</a>
-                            <a type="submit" class="btn btn-danger" onclick="ExcluirProduto('{{x.Id}}')">Excluir</a>
-                        </td>
-                    </tr>
-                </tbody>
+                <tbody></tbody>
             </table>
             <input id="hdNumPaginas" type="hidden" />
             <ul id="pagination-demo" class="pagination-sm"></ul>

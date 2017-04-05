@@ -29,7 +29,7 @@
 
                     data.forEach(function (d) {
                         itens +=
-                        '<option value="' + d.Id + '">' + d.Nome + '</option>';
+                            '<option value="' + d.Id + '">' + d.Nome + '</option>';
                     });
 
                     $("#selCliente").html(itens);
@@ -73,15 +73,15 @@
                     data.forEach(function (d) {
 
                         rows +=
-                        '<tr>' +
-                        '<td>' + d.NumeroPedido + '</td>' +
-                        '<td>' + d.NomeCliente + '</td>' +
-                        '<td>' + d.DataEntregaFormat + '</td>' +
-                        '<td>' + d.ValorTotal + '</td>' +
-                        '<td>' +
-                        //'<a type="submit" class="btn btn-success" href="/Pedido/Pedido/' + d.Id + '">Editar</a>' +
-                        //'<a type="submit" class="btn btn-danger" onclick="ExcluirPedido(' + d.Id + ')">Excluir</a>' +
-                        '</td></tr>';
+                            '<tr>' +
+                            '<td>' + d.NumeroPedido + '</td>' +
+                            '<td>' + d.NomeCliente + '</td>' +
+                            '<td>' + d.DataEntregaFormat + '</td>' +
+                            '<td>' + d.ValorTotal + '</td>' +
+                            '<td>' +
+                            '<a type="submit" class="btn btn-success" href="/Pedido/Pedido/' + d.Id + '">Editar</a>' +
+                            '<a type="submit" class="btn btn-danger" onclick="ExcluirPedido(' + d.Id + ')">Excluir</a>' +
+                            '</td></tr>';
                     });
 
                     $("#listPedidos tbody").html(rows);
@@ -143,7 +143,8 @@
             var dpPedidoFim = $('#dpPedidoFim').val();
             $('#hdPedidoFim').val(dpPedidoFim);
 
-            CarregarPedidos(selCliente, txtNumero, dpPedidoIni, dpPedidoFim, pagina);
+            if (ValidarFiltrosBusca(selCliente, txtNumero, dpPedidoIni, dpPedidoFim))
+                CarregarPedidos(selCliente, txtNumero, dpPedidoIni, dpPedidoFim, pagina);
         }
 
         $('#btnLimparFiltros').click(
@@ -155,6 +156,24 @@
                 IniciarOrdenacao("NumeroPedido");
             }
         );
+
+        function ValidarFiltrosBusca(selCliente, txtNumero, dpPedidoIni, dpPedidoFim) {
+
+            var result = true;
+            var message = '';
+
+            if (dpPedidoIni.length > 0 && dpPedidoFim.length == 0) {
+                result = false;
+                message += "Se informada a data inicial, a data final é obrigatória<br/>";
+            }
+            else if (dpPedidoIni > dpPedidoFim) {
+                result = false;
+                message += 'Data Inicial menor que data Final<br/>';
+            }
+            if (!result) ShowMessageModal('Alerta', message);
+
+            return result;
+        }
 
         function ExcluirPedido(id) {
 
@@ -291,16 +310,16 @@
                     <th id="thNumeroPedido" width="20%" onclick="OrdenarTabela('NumeroPedido', 1);">
                         Número
                     </th>
-                    <th id="thCliente" width="40%" onclick="OrdenarTabela('Cliente', 1);">
+                    <th id="thCliente" width="30%" onclick="OrdenarTabela('Cliente', 1);">
                         Cliente
                     </th>
-                    <th id="thDataEntrega" width="20%" onclick="OrdenarTabela('DataEntrega', 1);">
+                    <th id="thDataEntrega" width="18%" onclick="OrdenarTabela('DataEntrega', 1);">
                         Data de Entrega
                     </th>
-                    <th id="thValorTotal" width="20%" onclick="OrdenarTabela('ValorTotal', 1);">
+                    <th id="thValorTotal" width="18%" onclick="OrdenarTabela('ValorTotal', 1);">
                         Valor Total
                     </th>
-                    <th width="0%%">
+                    <th width="14%">
 
                     </th>
                 </tr>
